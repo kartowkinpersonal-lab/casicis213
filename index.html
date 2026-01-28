@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RGB CASINO | VAPE & ENERGY</title>
+    <style>
+        /* --- ОПТИМИЗАЦИЯ ПОД СЛАБЫЙ ПК --- */
+        body {
+            margin: 0; padding: 0;
+            background-color: #000;
+            color: #fff;
+            font-family: 'Verdana', sans-serif;
+            overflow-x: hidden;
+            user-select: none;
+        }
+
+        /* --- RGB АНИМАЦИИ --- */
+        @keyframes neon {
+            0% { border-color: #ff0000; box-shadow: 0 0 10px #ff0000; color: #ff0000; }
+            20% { border-color: #ffff00; box-shadow: 0 0 10px #ffff00; color: #ffff00; }
+            40% { border-color: #00ff00; box-shadow: 0 0 10px #00ff00; color: #00ff00; }
+            60% { border-color: #00ffff; box-shadow: 0 0 10px #00ffff; color: #00ffff; }
+            80% { border-color: #0000ff; box-shadow: 0 0 10px #0000ff; color: #0000ff; }
+            100% { border-color: #ff00ff; box-shadow: 0 0 10px #ff00ff; color: #ff00ff; }
+        }
+
+        @keyframes bg-slide {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .rgb-text { animation: neon 4s infinite; text-shadow: none; border:none; box-shadow: none; }
+        .rgb-border { border: 3px solid; animation: neon 4s infinite; }
+        
+        .rainbow-card {
+            background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
+            background-size: 400%;
+            animation: bg-slide 10s linear infinite;
+            color: #000 !important;
+            font-weight: 900;
+        }
+
+        /* --- ЭКРАН ВХОДА (СЕКРЕТКА) --- */
+        #secret-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 999;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+        }
+        
+        #secret-input {
+            padding: 15px; font-size: 20px; background: #111; color: #fff;
+            border: 2px solid #333; outline: none; text-align: center;
+            margin-bottom: 20px; width: 250px;
+        }
+        #secret-input:focus { border-color: #0f0; }
+
+        .enter-btn {
+            background: #111; color: #fff; border: 2px solid #fff;
+            padding: 15px 40px; font-size: 18px; cursor: pointer;
+            text-transform: uppercase; font-weight: bold;
+            transition: 0.2s;
+        }
+        .enter-btn:hover { background: #fff; color: #000; }
+
+        /* --- ОСНОВНОЙ ИНТЕРФЕЙС --- */
+        #game-interface { display: none; }
+
+        header {
+            padding: 15px; border-bottom: 2px solid #333;
+            display: flex; justify-content: space-between; align-items: center;
+            background: #050505;
+        }
+
+        /* КАЗИНО */
+        .slots-area {
+            background: #080808; padding: 30px 0;
+            display: flex; flex-direction: column; align-items: center;
+            border-bottom: 1px solid #333;
+        }
+
+        .slots-row {
+            display: flex; gap: 15px; margin-bottom: 20px;
+        }
+
+        .slot {
+            width: 150px; height: 150px;
+            background: #111; border: 2px solid #333;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border-radius: 10px;
+        }
+        .slot img { width: 90%; height: 90px; object-fit: contain; }
+        .slot.win { border: 4px solid #fff; box-shadow: 0 0 20px rgba(255,255,255,0.3); }
+
+        .spin-btn {
+            padding: 15px 60px; font-size: 22px; font-weight: bold;
+            background: #000; color: #fff; border: 3px solid #fff;
+            cursor: pointer; text-transform: uppercase;
+        }
+        .spin-btn:hover { background: #fff; color: #000; }
+
+        /* ЛЕНТА КЕЙСОВ */
+        .cases-wrapper {
+            padding: 20px; background: #0b0b0b;
+        }
+        .cases-scroll {
+            display: flex; overflow-x: auto; gap: 10px; padding-bottom: 10px;
+        }
+        .case-card {
+            min-width: 140px; background: #161616; border: 1px solid #333;
+            padding: 10px; text-align: center; cursor: pointer;
+            transition: 0.2s;
+        }
+        .case-card:hover { transform: translateY(-5px); background: #222; }
+        .case-card.active { border: 2px solid #0f0; background: #0f1a0f; }
+
+        /* ИНВЕНТАРЬ */
+        .inventory { padding: 20px; }
+        .inv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+        
+        .item-card {
+            background: #111; border: 1px solid #333; padding: 10px; text-align: center;
+            cursor: pointer; position: relative;
+        }
+        .item-card:hover { border-color: #fff; }
+        .item-card img { width: 100%; height: 80px; object-fit: contain; margin-bottom: 5px; }
+
+    </style>
+</head>
+<body>
+
+    <!-- ЭКРАН ВХОДА -->
+    <div id="secret-screen">
+        <h1 class="rgb-text" style="margin-bottom:30px;">СИСТЕМА ЗАБЛОКИРОВАНА</h1>
+        <p>Введите пароль доступа:</p>
+        <input type="text" id="secret-input" placeholder="Пароль...">
+        <button class="enter-btn rgb-border" onclick="checkPass()">ВОЙТИ</button>
+        <p id="error-msg" style="color:red; opacity:0; margin-top:10px;">НЕВЕРНЫЙ ПАРОЛЬ</p>
+    </div>
+
+    <!-- ИГРА -->
+    <div id="game-interface">
+        <header>
+            <div class="rgb-text" style="font-weight:bold; font-size:20px;">VAPE & ENERGY CASINO</div>
+            <div style="font-size:24px; color:#0f0;"><span id="balance">5000</span> ₽</div>
+        </header>
+
+        <div class="slots-area">
+            <div class="slots-row">
+                <div class="slot" id="slot1"></div>
+                <div class="slot win" id="slot2"></div>
+                <div class="slot" id="slot3"></div>
+            </div>
+            <div id="info-text" style="margin-bottom: 15px; color: #888;">Выберите кейс ниже</div>
+            <button class="spin-btn rgb-border" id="spin-btn" onclick="spin()">КРУТИТЬ</button>
+        </div>
+
+        <div class="cases-wrapper">
+            <div style="margin-bottom:10px; color:#aaa;">ДОСТУПНЫЕ КЕЙСЫ:</div>
+            <div class="cases-scroll" id="cases-list">
+                <!-- Сюда генерятся кейсы -->
+            </div>
+        </div>
+
+        <div class="inventory">
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+                <h3>ТВОЙ ХАБАР</h3>
+                <button onclick="sellAll()" style="background:#500; color:#fff; border:none; padding:5px 15px; cursor:pointer;">ПРОДАТЬ ВСЁ</button>
+            </div>
+            <div class="inv-grid" id="inventory"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- ПРОВЕРКА ПАРОЛЯ ---
+        function checkPass() {
+            const val = document.getElementById('secret-input').value.trim().toLowerCase();
+            if (val === "картошка") {
+                document.getElementById('secret-screen').style.display = 'none';
+                document.getElementById('game-interface').style.display = 'block';
+                initGame();
+            } else {
+                let err = document.getElementById('error-msg');
+                err.style.opacity = 1;
+                setTimeout(() => err.style.opacity = 0, 2000);
+            }
+        }
+
+        // --- БАЗА ПРЕДМЕТОВ (Энергетики и Вейпы) ---
+        // type: 0=Energy, 1=Vape
+        // r (редкость): 0-обыч, 1-редк, 2-эпик, 3-легенда, 4-РАДУГА
+        const DB = [
+            // ЭНЕРГЕТИКИ
+            {n: "Flash Energy", p: 60, r: 0, t: 0, c: '#333'},
+            {n: "Gorilla", p: 80, r: 0, t: 0, c: '#003300'},
+            {n: "Tornado", p: 70, r: 0, t: 0, c: '#330000'},
+            {n: "Adrenaline Rush", p: 150, r: 1, t: 0, c: '#000'},
+            {n: "Red Bull", p: 180, r: 1, t: 0, c: '#000066'},
+            {n: "Monster Original", p: 200, r: 2, t: 0, c: '#000'},
+            {n: "Monster Mango", p: 220, r: 2, t: 0, c: '#006666'},
+            {n: "Imba Energy", p: 500, r: 3, t: 0, c: '#660066'},
+            
+            // ВЕЙПЫ
+            {n: "HQD Cuvie", p: 400, r: 0, t: 1, c: '#444'},
+            {n: "ElfBar 2000", p: 800, r: 1, t: 1, c: '#220044'},
+            {n: "Charon Baby", p: 1800, r: 2, t: 1, c: '#004444'},
+            {n: "Battlestar", p: 1600, r: 2, t: 1, c: '#442200'},
+            {n: "Aegis Hero 2", p: 3500, r: 3, t: 1, c: '#000'},
+            {n: "Drag X Pro", p: 4000, r: 3, t: 1, c: '#550000'},
+            {n: "DotAIO V2", p: 9000, r: 3, t: 1, c: '#440044'},
+            
+            // РАДУЖНЫЕ (Секретные)
+            {n: "RAINBOW MONSTER", p: 50000, r: 4, t: 0, c: '#000'},
+            {n: "RGB DRAG MOD", p: 100000, r: 4, t: 1, c: '#000'}
+        ];
+
+        // --- СПИСОК КЕЙСОВ ---
+        const CASES = [
+            { id: 0, name: "Школьный Обед", price: 100, types: [0], minR: 0, maxR: 1 }, // Дешевые энергетики
+            { id: 1, name: "Первый Пар", price: 300, types: [1], minR: 0, maxR: 0 },   // Дешевые вейпы
+            { id: 2, name: "Заряд Бодрости", price: 500, types: [0], minR: 1, maxR: 2 }, // Крутые энергетики
+            { id: 3, name: "Вейп Шоп", price: 1000, types: [1], minR: 1, maxR: 2 },      // Средние вейпы
+            { id: 4, name: "Сахарная Кома", price: 2500, types: [0], minR: 2, maxR: 3 }, // Топ энергетики
+            { id: 5, name: "Vape God", price: 5000, types: [1], minR: 2, maxR: 3 },      // Топ вейпы
+            { id: 6, name: "RGB MASTER", price: 25000, types: [0, 1], minR: 3, maxR: 4 } // Только леги и радуга
+        ];
+
+        let balance = 5000;
+        let inventory = [];
+        let activeCase = CASES[0];
+        let spinning = false;
+
+        function initGame() {
+            renderCases();
+            updateUI();
+            // Превью слотов
+            fillSlot('slot1', getRandomItem());
+            fillSlot('slot2', getRandomItem());
+            fillSlot('slot3', getRandomItem());
+        }
+
+        function renderCases() {
+            const list = document.getElementById('cases-list');
+            CASES.forEach((c, idx) => {
+                let div = document.createElement('div');
+                div.className = 'case-card';
+                if (idx === 0) div.classList.add('active');
+                div.onclick = () => selectCase(idx);
+                div.innerHTML = `
+                    <div style="font-size:12px; font-weight:bold; color:#fff">${c.name}</div>
+                    <div style="font-size:11px; margin-top:5px; color:#888;">${c.types.includes(0) ? '⚡' : ''}${c.types.includes(1) ? '💨' : ''}</div>
+                    <div style="color:#0f0; margin-top:5px;">${c.price} ₽</div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function selectCase(idx) {
+            if (spinning) return;
+            activeCase = CASES[idx];
+            document.querySelectorAll('.case-card').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.case-card')[idx].classList.add('active');
+            document.getElementById('info-text').innerText = `Кейс: ${activeCase.name} | Цена: ${activeCase.price} ₽`;
+        }
+
+        function spin() {
+            if (spinning) return;
+            if (balance < activeCase.price) {
+                alert("Не хватает денег!"); return;
+            }
+
+            balance -= activeCase.price;
+            spinning = true;
+            document.getElementById('spin-btn').disabled = true;
+            updateUI();
+
+            // Логика дропа
+            // Фильтруем базу по правилам кейса
+            let pool = DB.filter(item => 
+                activeCase.types.includes(item.t) && 
+                item.r >= activeCase.minR && 
+                item.r <= activeCase.maxR
+            );
+            
+            // Если пул пустой (на всякий случай), берем весь DB
+            if(pool.length === 0) pool = DB;
+
+            // Выбираем победителя
+            let winner = pool[Math.floor(Math.random() * pool.length)];
+
+            // Анимация
+            let ticks = 0;
+            let interval = setInterval(() => {
+                ticks++;
+                fillSlot('slot1', getRandomItem());
+                fillSlot('slot2', getRandomItem());
+                fillSlot('slot3', getRandomItem());
+
+                if (ticks > 20) {
+                    clearInterval(interval);
+                    showWin(winner);
+                }
+            }, 80);
+        }
+
+        function showWin(item) {
+            spinning = false;
+            document.getElementById('spin-btn').disabled = false;
+            
+            fillSlot('slot1', getRandomItem());
+            fillSlot('slot2', item); // ПОБЕДИТЕЛЬ В ЦЕНТРЕ
+            fillSlot('slot3', getRandomItem());
+
+            inventory.unshift(item);
+            document.getElementById('info-text').innerHTML = `ВЫПАЛ: <span style="color:${item.r===4 ? 'magenta' : 'white'}">${item.n}</span> (${item.p}₽)`;
+            updateUI();
+        }
+
+        function fillSlot(id, item) {
+            let el = document.getElementById(id);
+            let isRainbow = item.r === 4;
+            let text = item.n.replace(/ /g, '+');
+            let imgColor = item.c.replace('#', '');
+            
+            // Используем Placehold.co для генерации легких картинок
+            el.innerHTML = `
+                <img src="https://placehold.co/150x150/${imgColor}/FFF?text=${text}">
+                <div style="font-size:10px; color:${isRainbow ? 'magenta' : '#ccc'}">${item.n}</div>
+            `;
+            
+            if(isRainbow) {
+                el.classList.add('rainbow-card');
+            } else {
+                el.classList.remove('rainbow-card');
+            }
+        }
+
+        function getRandomItem() {
+            return DB[Math.floor(Math.random() * DB.length)];
+        }
+
+        function updateUI() {
+            document.getElementById('balance').innerText = balance;
+            let grid = document.getElementById('inventory');
+            grid.innerHTML = '';
+            
+            inventory.forEach((item, index) => {
+                let div = document.createElement('div');
+                div.className = 'item-card';
+                if(item.r === 4) div.classList.add('rainbow-card'); // Радужный класс для инвентаря
+                
+                div.onclick = () => sell(index);
+                
+                // Рамка по редкости
+                let borderColor = ['#666', '#00f', '#a0f', '#ff0', 'transparent'][item.r];
+                div.style.borderBottom = `3px solid ${borderColor}`;
+
+                div.innerHTML = `
+                    <img src="https://placehold.co/150x150/${item.c.replace('#','')}/FFF?text=${item.n.split(' ')[0]}">
+                    <div style="font-size:11px; font-weight:bold;">${item.n}</div>
+                    <div style="color:#0f0; font-size:12px;">${item.p} ₽</div>
+                `;
+                grid.appendChild(div);
+            });
+        }
+
+        function sell(index) {
+            balance += inventory[index].p;
+            inventory.splice(index, 1);
+            updateUI();
+        }
+
+        function sellAll() {
+            let total = inventory.reduce((acc, i) => acc + i.p, 0);
+            balance += total;
+            inventory = [];
+            updateUI();
+        }
+    </script>
+</body>
+</html>
